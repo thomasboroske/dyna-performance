@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DYNA — Performance & Composição Corporal</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080808;
+  --bg2:      #0d0d0d;
+  --surface:  #111111;
+  --surface2: #161616;
+  --border:   #1e1e1e;
+  --border2:  #272727;
+  --wine:     #6b1010;
+  --wine2:    #8f1515;
+  --wine3:    #3d0808;
+  --wine-dim: rgba(107,16,16,0.18);
+  --wine-glow:rgba(107,16,16,0.35);
+  --text:     #e8e4dc;
+  --text2:    #8a8680;
+  --text3:    #404040;
+  --white:    #f0ece4;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* CUSTOM CURSOR */
+.cursor{
+  position:fixed;width:8px;height:8px;
+  background:var(--wine2);border-radius:50%;
+  pointer-events:none;z-index:99999;
+  transform:translate(-50%,-50%);
+  transition:transform 0.1s,width 0.2s,height 0.2s,background 0.2s;
+}
+.cursor-ring{
+  position:fixed;width:32px;height:32px;
+  border:1px solid rgba(107,16,16,0.5);border-radius:50%;
+  pointer-events:none;z-index:99998;
+  transform:translate(-50%,-50%);
+  transition:transform 0.12s ease,width 0.3s,height 0.3s,border-color 0.2s;
+}
+body:has(a:hover) .cursor-ring,
+body:has(button:hover) .cursor-ring{
+  width:48px;height:48px;border-color:var(--wine2);
+}
+
+/* GRAIN */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9998;opacity:0.6;
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:900;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:24px;
+  padding:16px 48px;
+  background:rgba(8,8,8,0.97);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  transition:padding 0.3s;
+  min-height:60px;
+}
+nav.scrolled{
+  padding:12px 48px;
+}
+
+.nav-logo{
+  display:flex;flex-direction:column;gap:2px;
+  flex-shrink:0;min-width:0;
+}
+.nav-logo-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:24px;letter-spacing:7px;color:var(--white);
+  line-height:1;display:block;white-space:nowrap;
+}
+.nav-logo-sub{
+  font-family:'DM Mono',monospace;font-size:7px;
+  letter-spacing:2.5px;color:var(--text3);text-transform:uppercase;
+  display:block;white-space:nowrap;line-height:1;
+}
+
+.nav-links{
+  display:flex;gap:28px;list-style:none;
+  justify-content:center;flex-wrap:nowrap;
+}
+.nav-links a{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--text3);text-transform:uppercase;
+  text-decoration:none;transition:color 0.2s;white-space:nowrap;
+}
+.nav-links a:hover{color:var(--wine2);}
+
+.nav-cta{
+  background:var(--wine);border:1px solid var(--wine2);
+  color:var(--white);font-family:'DM Mono',monospace;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  padding:10px 18px;cursor:pointer;
+  text-decoration:none;flex-shrink:0;white-space:nowrap;
+  transition:background 0.2s,box-shadow 0.2s;
+}
+.nav-cta:hover{
+  background:var(--wine2);
+  box-shadow:0 0 24px var(--wine-glow);
+}
+
+/* HERO */
+.hero{
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:0 48px;overflow:hidden;
+}
+
+.hero-geo{
+  position:absolute;inset:0;pointer-events:none;
+}
+.hero-geo svg{position:absolute;}
+.geo-lines{
+  top:0;right:0;width:55%;height:100%;
+  opacity:0.04;
+}
+.geo-flame{
+  bottom:-10%;right:5%;width:45%;height:90%;
+  opacity:0.07;filter:blur(1px);
+}
+
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--border2);
+  background:var(--surface);
+  padding:7px 16px;margin-bottom:32px;
+  width:fit-content;
+  opacity:0;animation:up 0.8s ease 0.2s forwards;
+}
+.hero-tag-dot{
+  width:5px;height:5px;background:var(--wine2);border-radius:50%;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+
+.hero-tag-text{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2.5px;color:var(--text2);text-transform:uppercase;
+}
+
+.hero-headline{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(72px,12vw,148px);
+  letter-spacing:2px;line-height:0.88;
+  opacity:0;animation:up 0.9s ease 0.35s forwards;
+}
+.hero-headline .line2{
+  color:var(--wine2);
+  text-shadow:0 0 80px rgba(107,16,16,0.5);
+}
+.hero-headline .line3{
+  color:var(--text3);font-size:0.38em;
+  letter-spacing:8px;display:block;
+  margin-top:12px;
+}
+
+.hero-body{
+  max-width:480px;margin-top:28px;
+  font-size:16px;font-weight:300;
+  color:var(--text2);line-height:1.7;
+  opacity:0;animation:up 0.8s ease 0.5s forwards;
+}
+
+.hero-actions{
+  display:flex;gap:14px;margin-top:40px;flex-wrap:wrap;
+  opacity:0;animation:up 0.8s ease 0.65s forwards;
+}
+
+.btn-primary{
+  background:var(--wine);border:1px solid var(--wine2);
+  color:var(--white);font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:4px;
+  padding:16px 40px;cursor:pointer;text-decoration:none;
+  position:relative;overflow:hidden;
+  transition:box-shadow 0.3s,background 0.3s;
+  display:inline-block;
+}
+.btn-primary::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.05));
+}
+.btn-primary:hover{
+  background:var(--wine2);
+  box-shadow:0 0 40px var(--wine-glow),0 0 80px rgba(107,16,16,0.15);
+}
+
+.btn-ghost{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text2);font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:4px;
+  padding:16px 40px;cursor:pointer;text-decoration:none;
+  transition:border-color 0.3s,color 0.3s;
+  display:inline-block;
+}
+.btn-ghost:hover{border-color:var(--wine);color:var(--wine2);}
+
+.hero-stats{
+  display:flex;gap:0;margin-top:64px;
+  border-top:1px solid var(--border);padding-top:32px;
+  opacity:0;animation:up 0.8s ease 0.8s forwards;
+}
+.hero-stat{
+  flex:1;padding-right:32px;border-right:1px solid var(--border);
+  margin-right:32px;
+}
+.hero-stat:last-child{border-right:none;margin-right:0;padding-right:0;}
+.hero-stat-val{
+  font-family:'Bebas Neue',sans-serif;font-size:42px;
+  letter-spacing:1px;color:var(--wine2);line-height:1;
+}
+.hero-stat-label{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--text3);text-transform:uppercase;
+  margin-top:4px;
+}
+
+/* SCROLL INDICATOR */
+.scroll-hint{
+  position:absolute;bottom:36px;left:48px;
+  display:flex;align-items:center;gap:12px;
+  opacity:0;animation:up 0.8s ease 1.2s forwards;
+}
+.scroll-line{
+  width:40px;height:1px;background:var(--border2);
+  position:relative;overflow:hidden;
+}
+.scroll-line::after{
+  content:'';position:absolute;top:0;left:-100%;
+  width:100%;height:100%;background:var(--wine2);
+  animation:slide 2s infinite;
+}
+@keyframes slide{to{left:100%}}
+.scroll-text{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--text3);text-transform:uppercase;
+}
+
+/* MANIFESTO */
+.manifesto{
+  padding:120px 48px;position:relative;overflow:hidden;
+  border-top:1px solid var(--border);
+}
+.manifesto-bg{
+  position:absolute;right:-100px;top:50%;transform:translateY(-50%);
+  font-family:'Bebas Neue',sans-serif;font-size:320px;
+  color:rgba(107,16,16,0.03);pointer-events:none;letter-spacing:-8px;
+  user-select:none;white-space:nowrap;
+}
+
+.section-eyebrow{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:3px;color:var(--wine2);text-transform:uppercase;
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;
+}
+.section-eyebrow::before{
+  content:'';width:24px;height:1px;background:var(--wine);
+}
+
+.manifesto-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(40px,6vw,72px);letter-spacing:2px;
+  line-height:1;margin-bottom:40px;max-width:700px;
+}
+
+.manifesto-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:1px;
+  background:var(--border);margin-top:48px;
+}
+.manifesto-item{
+  background:var(--bg);padding:36px 32px;
+  position:relative;overflow:hidden;
+  transition:background 0.3s;
+}
+.manifesto-item:hover{background:var(--surface);}
+.manifesto-item::before{
+  content:attr(data-num);
+  position:absolute;top:20px;right:24px;
+  font-family:'Bebas Neue',sans-serif;font-size:64px;
+  color:rgba(107,16,16,0.08);letter-spacing:2px;
+  line-height:1;
+}
+.manifesto-item-title{
+  font-family:'Bebas Neue',sans-serif;font-size:22px;
+  letter-spacing:3px;color:var(--white);margin-bottom:10px;
+}
+.manifesto-item-text{
+  font-size:14px;font-weight:300;color:var(--text2);line-height:1.7;
+}
+.manifesto-item-icon{font-size:22px;margin-bottom:14px;}
+
+/* COMO FUNCIONA */
+.how{
+  padding:120px 48px;background:var(--bg2);
+  border-top:1px solid var(--border);
+}
+
+.how-steps{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--border);margin-top:48px;
+}
+.how-step{
+  background:var(--bg2);padding:32px 24px;
+  position:relative;
+}
+.how-step::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--wine),transparent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.4s ease;
+}
+.how-step:hover::after{transform:scaleX(1);}
+.how-step-num{
+  font-family:'Bebas Neue',sans-serif;font-size:48px;
+  color:var(--wine-dim);letter-spacing:2px;line-height:1;
+  border:1px solid var(--border2);
+  width:64px;height:64px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+}
+.how-step-title{
+  font-family:'Bebas Neue',sans-serif;font-size:18px;
+  letter-spacing:2px;color:var(--white);margin-bottom:8px;
+}
+.how-step-text{font-size:13px;font-weight:300;color:var(--text2);line-height:1.65;}
+
+/* PLANOS */
+.plans{
+  padding:120px 48px;
+  border-top:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.plans-bg{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(107,16,16,0.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.plans-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);margin-top:48px;
+}
+
+.plan-card{
+  background:var(--bg);padding:40px 32px;
+  position:relative;overflow:hidden;
+  transition:background 0.3s;
+  display:flex;flex-direction:column;
+}
+.plan-card:hover{background:var(--surface);}
+
+.plan-card.featured{
+  background:linear-gradient(160deg,var(--surface) 0%,var(--wine3) 100%);
+  border:1px solid var(--wine);
+}
+.plan-card.featured:hover{
+  background:linear-gradient(160deg,var(--surface2) 0%,rgba(107,16,16,0.4) 100%);
+}
+
+.plan-badge{
+  display:inline-block;
+  background:var(--wine);color:var(--white);
+  font-family:'DM Mono',monospace;font-size:8px;
+  letter-spacing:2px;padding:4px 12px;
+  text-transform:uppercase;margin-bottom:20px;
+  width:fit-content;
+}
+.plan-name{
+  font-family:'Bebas Neue',sans-serif;font-size:32px;
+  letter-spacing:4px;color:var(--white);margin-bottom:4px;
+}
+.plan-tagline{
+  font-size:12px;font-weight:300;color:var(--text2);
+  margin-bottom:28px;letter-spacing:0.5px;
+}
+.plan-price{
+  display:flex;align-items:flex-end;gap:4px;margin-bottom:8px;
+}
+.plan-price-val{
+  font-family:'Bebas Neue',sans-serif;font-size:56px;
+  letter-spacing:0;color:var(--wine2);line-height:1;
+}
+.plan-price-cur{
+  font-family:'DM Mono',monospace;font-size:14px;
+  color:var(--text2);margin-bottom:10px;
+}
+.plan-price-per{
+  font-family:'DM Mono',monospace;font-size:9px;
+  color:var(--text3);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:28px;
+}
+.plan-divider{height:1px;background:var(--border);margin:20px 0;}
+.plan-features{
+  list-style:none;display:flex;flex-direction:column;
+  gap:10px;flex:1;margin-bottom:32px;
+}
+.plan-features li{
+  font-size:13px;font-weight:300;color:var(--text2);
+  display:flex;gap:10px;align-items:flex-start;
+  padding-bottom:10px;border-bottom:1px solid var(--border);
+}
+.plan-features li:last-child{border-bottom:none;}
+.plan-features li::before{
+  content:'→';color:var(--wine2);flex-shrink:0;font-size:12px;margin-top:1px;
+}
+
+.plan-cta{
+  display:block;text-align:center;
+  background:transparent;border:1px solid var(--border2);
+  color:var(--text2);font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:4px;
+  padding:14px 24px;cursor:pointer;text-decoration:none;
+  transition:all 0.3s;margin-top:auto;
+}
+.plan-cta:hover{border-color:var(--wine);color:var(--wine2);}
+.plan-card.featured .plan-cta{
+  background:var(--wine);border-color:var(--wine2);color:var(--white);
+}
+.plan-card.featured .plan-cta:hover{
+  background:var(--wine2);
+  box-shadow:0 0 32px var(--wine-glow);
+}
+
+/* DEPOIMENTOS */
+.testimonials{
+  padding:120px 48px;background:var(--bg2);
+  border-top:1px solid var(--border);
+}
+.testi-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);margin-top:48px;
+}
+.testi-card{
+  background:var(--bg2);padding:32px;
+  position:relative;transition:background 0.3s;
+}
+.testi-card:hover{background:var(--surface);}
+.testi-stars{color:var(--wine2);font-size:12px;letter-spacing:2px;margin-bottom:16px;}
+.testi-text{
+  font-size:14px;font-weight:300;color:var(--text);
+  line-height:1.75;font-style:italic;margin-bottom:24px;
+}
+.testi-text::before{
+  content:'"';font-family:'Bebas Neue',sans-serif;
+  font-size:48px;color:var(--wine3);line-height:0.8;
+  display:block;margin-bottom:8px;
+}
+.testi-author{display:flex;flex-direction:column;gap:2px;}
+.testi-name{
+  font-family:'Rajdhani',sans-serif;font-weight:600;
+  font-size:15px;color:var(--white);letter-spacing:1px;
+}
+.testi-info{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--text3);text-transform:uppercase;
+}
+
+/* FAQ */
+.faq{
+  padding:120px 48px;
+  border-top:1px solid var(--border);
+}
+.faq-list{max-width:720px;margin-top:48px;}
+.faq-item{
+  border-bottom:1px solid var(--border);overflow:hidden;
+}
+.faq-q{
+  width:100%;background:none;border:none;cursor:pointer;
+  text-align:left;padding:22px 0;
+  display:flex;justify-content:space-between;align-items:center;
+  gap:16px;
+}
+.faq-q-text{
+  font-family:'Rajdhani',sans-serif;font-weight:600;
+  font-size:17px;letter-spacing:0.5px;color:var(--text);
+  transition:color 0.2s;
+}
+.faq-item.open .faq-q-text{color:var(--wine2);}
+.faq-icon{
+  width:24px;height:24px;flex-shrink:0;
+  border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--text3);
+  transition:all 0.3s;
+}
+.faq-item.open .faq-icon{
+  background:var(--wine);border-color:var(--wine2);color:var(--white);
+  transform:rotate(45deg);
+}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.4s ease,padding 0.3s;
+}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:20px;}
+.faq-a-text{
+  font-size:14px;font-weight:300;color:var(--text2);line-height:1.75;
+}
+
+/* CTA FINAL */
+.cta-section{
+  padding:120px 48px;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--wine3) 100%);
+  border-top:1px solid var(--wine);
+  text-align:center;position:relative;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  width:800px;height:400px;
+  background:radial-gradient(ellipse,rgba(107,16,16,0.3) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cta-label{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:3px;color:var(--wine2);
+  text-transform:uppercase;margin-bottom:20px;
+}
+.cta-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(48px,8vw,96px);letter-spacing:2px;
+  line-height:1;margin-bottom:20px;
+}
+.cta-sub{
+  font-size:16px;font-weight:300;color:var(--text2);
+  max-width:480px;margin:0 auto 40px;line-height:1.7;
+}
+.cta-wpp{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--wine);border:1px solid var(--wine2);
+  color:var(--white);font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:4px;
+  padding:18px 48px;cursor:pointer;text-decoration:none;
+  transition:all 0.3s;
+}
+.cta-wpp:hover{
+  background:var(--wine2);
+  box-shadow:0 0 60px var(--wine-glow);
+}
+.wpp-icon{font-size:20px;}
+
+/* FOOTER */
+footer{
+  padding:40px 48px;
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;
+}
+.footer-logo{
+  font-family:'Bebas Neue',sans-serif;font-size:24px;
+  letter-spacing:7px;color:var(--white);
+}
+.footer-links{
+  display:flex;gap:24px;list-style:none;
+}
+.footer-links a{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:2px;color:var(--text3);text-decoration:none;
+  text-transform:uppercase;transition:color 0.2s;
+}
+.footer-links a:hover{color:var(--wine2);}
+.footer-copy{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;
+}
+
+/* REVEAL ON SCROLL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* ANIMATIONS */
+@keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:16px 24px;}
+  nav.scrolled{padding:12px 24px;}
+  .nav-links{display:none;}
+  .hero{padding:0 24px;}
+  .hero-stats{flex-wrap:wrap;gap:24px;}
+  .hero-stat{flex:0 0 40%;border-right:none;margin-right:0;padding-right:0;}
+  .manifesto{padding:80px 24px;}
+  .manifesto-grid{grid-template-columns:1fr;}
+  .how{padding:80px 24px;}
+  .how-steps{grid-template-columns:1fr 1fr;}
+  .plans{padding:80px 24px;}
+  .plans-grid{grid-template-columns:1fr;}
+  .testimonials{padding:80px 24px;}
+  .testi-grid{grid-template-columns:1fr;}
+  .faq{padding:80px 24px;}
+  .cta-section{padding:80px 24px;}
+  footer{padding:32px 24px;flex-direction:column;text-align:center;}
+  .scroll-hint{left:24px;}
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">
+    <span class="nav-logo-text">DYNA</span>
+    <span class="nav-logo-sub">Performance & Composição</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#manifesto">Método</a></li>
+    <li><a href="#how">Como funciona</a></li>
+    <li><a href="#plans">Planos</a></li>
+    <li><a href="#testi">Resultados</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="#plans" class="nav-cta">Começar agora</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-geo">
+    <!-- Grid lines geometric background -->
+    <svg class="geo-lines" viewBox="0 0 800 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="200" x2="800" y2="200" stroke="#6b1010" stroke-width="0.5"/>
+      <line x1="0" y1="400" x2="800" y2="400" stroke="#6b1010" stroke-width="0.5"/>
+      <line x1="0" y1="600" x2="800" y2="600" stroke="#6b1010" stroke-width="0.5"/>
+      <line x1="200" y1="0" x2="200" y2="900" stroke="#6b1010" stroke-width="0.5"/>
+      <line x1="400" y1="0" x2="400" y2="900" stroke="#6b1010" stroke-width="0.5"/>
+      <line x1="600" y1="0" x2="600" y2="900" stroke="#6b1010" stroke-width="0.5"/>
+      <polygon points="400,100 600,300 400,500 200,300" stroke="#6b1010" stroke-width="0.8" fill="none"/>
+      <polygon points="400,200 550,350 400,500 250,350" stroke="#6b1010" stroke-width="0.4" fill="none"/>
+      <circle cx="400" cy="300" r="150" stroke="#6b1010" stroke-width="0.5" fill="none"/>
+      <circle cx="400" cy="300" r="80" stroke="#6b1010" stroke-width="0.3" fill="none"/>
+    </svg>
+    <!-- Flame-like shape -->
+    <svg class="geo-flame" viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M200 580 C120 480 60 380 100 260 C130 170 180 120 200 20 C220 120 270 170 300 260 C340 380 280 480 200 580Z" fill="#6b1010"/>
+      <path d="M200 500 C150 420 110 340 140 240 C165 165 190 120 200 60 C210 120 235 165 260 240 C290 340 250 420 200 500Z" fill="#3d0808"/>
+    </svg>
+  </div>
+
+  <div class="hero-tag">
+    <span class="hero-tag-dot"></span>
+    <span class="hero-tag-text">Assessoria de performance individualizada</span>
+  </div>
+
+  <h1 class="hero-headline">
+    ELEVE<br>
+    <span class="line2">SEU</span><br>
+    LIMITE
+    <span class="line3">Performance • Composição • Resultado</span>
+  </h1>
+
+  <p class="hero-body">
+    Protocolo personalizado de treino e nutrição desenvolvido para quem leva a sério o próprio corpo. Sem atalhos. Sem fórmulas genéricas. Só resultado real.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#plans" class="btn-primary">Ver planos</a>
+    <a href="#how" class="btn-ghost">Como funciona</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val">200+</div>
+      <div class="hero-stat-label">Alunos ativos</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">6–8</div>
+      <div class="hero-stat-label">Semanas p/ resultado</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">100%</div>
+      <div class="hero-stat-label">Protocolos individuais</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="manifesto reveal" id="manifesto">
+  <div class="manifesto-bg">DYNA</div>
+  <div class="section-eyebrow">Método DYNA</div>
+  <h2 class="manifesto-title">Treinado para você. Não para a média.</h2>
+  <p style="font-size:16px;font-weight:300;color:var(--text2);max-width:560px;line-height:1.75;">
+    Cada corpo responde diferente. Por isso cada protocolo DYNA é construído do zero — analisando sua composição, rotina, objetivos e limitações. Performance real começa com precisão.
+  </p>
+  <div class="manifesto-grid">
+    <div class="manifesto-item" data-num="01">
+      <div class="manifesto-item-icon">📊</div>
+      <div class="manifesto-item-title">Avaliação Completa</div>
+      <div class="manifesto-item-text">Análise de composição corporal, taxa metabólica e histórico para montar o protocolo ideal para o seu perfil.</div>
+    </div>
+    <div class="manifesto-item" data-num="02">
+      <div class="manifesto-item-icon">🎯</div>
+      <div class="manifesto-item-title">Protocolo Individual</div>
+      <div class="manifesto-item-text">Treino e dieta desenvolvidos especificamente para você, com ajustes contínuos baseados na sua evolução real.</div>
+    </div>
+    <div class="manifesto-item" data-num="03">
+      <div class="manifesto-item-icon">📱</div>
+      <div class="manifesto-item-title">Acompanhamento Digital</div>
+      <div class="manifesto-item-text">Portal exclusivo com seu protocolo, histórico de treinos, evolução de métricas e suporte direto via plataforma.</div>
+    </div>
+    <div class="manifesto-item" data-num="04">
+      <div class="manifesto-item-icon">⚡</div>
+      <div class="manifesto-item-title">Resultado Consistente</div>
+      <div class="manifesto-item-text">Sem fórmulas mágicas. Metodologia que combina ciência do exercício, nutrição funcional e progressão inteligente.</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="how reveal" id="how">
+  <div class="section-eyebrow">Processo</div>
+  <h2 class="manifesto-title">Do zero ao protocolo em 4 etapas.</h2>
+  <div class="how-steps">
+    <div class="how-step">
+      <div class="how-step-num">01</div>
+      <div class="how-step-title">Avaliação Inicial</div>
+      <div class="how-step-text">Você preenche a anamnese completa: histórico, objetivos, rotina, limitações físicas e preferências alimentares.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">02</div>
+      <div class="how-step-title">Análise DYNA</div>
+      <div class="how-step-text">Calculamos sua composição corporal, taxa metabólica e parâmetros de performance para montar a base do protocolo.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">03</div>
+      <div class="how-step-title">Protocolo Entregue</div>
+      <div class="how-step-text">Em até 72h você recebe seu plano completo de treino e dieta no portal exclusivo com interface interativa.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">04</div>
+      <div class="how-step-title">Evolução Contínua</div>
+      <div class="how-step-text">Acompanhamento semanal, ajustes de protocolo e acesso ao histórico de evolução em tempo real na plataforma.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="plans reveal" id="plans">
+  <div class="plans-bg"></div>
+  <div class="section-eyebrow">Investimento</div>
+  <h2 class="manifesto-title">Escolha seu nível de comprometimento.</h2>
+
+  <div class="plans-grid" style="grid-template-columns:repeat(2,1fr);">
+    <!-- BÁSICO -->
+    <div class="plan-card">
+      <div class="plan-name">Básico</div>
+      <div class="plan-tagline">Para quem está começando a levar a sério</div>
+      <div class="plan-price">
+        <span class="plan-price-cur">R$</span>
+        <span class="plan-price-val">97</span>
+      </div>
+      <div class="plan-price-per">por mês</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Protocolo de treino individualizado</li>
+        <li>Plano alimentar base (30 dias)</li>
+        <li>Portal do aluno com tracking</li>
+        <li>1 revisão mensal de protocolo</li>
+        <li>Suporte via portal</li>
+      </ul>
+      <a href="https://instagram.com/dyna.performance" target="_blank" class="plan-cta">Começar agora</a>
+    </div>
+
+    <!-- PRO -->
+    <div class="plan-card featured">
+      <div class="plan-badge">Mais popular</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-tagline">Para quem quer resultado acelerado</div>
+      <div class="plan-price">
+        <span class="plan-price-cur">R$</span>
+        <span class="plan-price-val">197</span>
+      </div>
+      <div class="plan-price-per">por mês</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li>Tudo do plano Básico</li>
+        <li>Análise de composição corporal mensal</li>
+        <li>Protocolo atualizado quinzenalmente</li>
+        <li>Suplementação orientada</li>
+        <li>Check-in semanal de evolução</li>
+        <li>Suporte prioritário</li>
+      </ul>
+      <a href="https://instagram.com/dyna.performance" target="_blank" class="plan-cta">Quero o Pro</a>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section class="testimonials reveal" id="testi">
+  <div class="section-eyebrow">Resultados reais</div>
+  <h2 class="manifesto-title">Quem treina DYNA não volta atrás.</h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">Em 8 semanas perdi 6kg de gordura e ganhei massa. O protocolo é cirúrgico — sem achismo, sem perda de tempo.</div>
+      <div class="testi-author">
+        <span class="testi-name">Marcos R.</span>
+        <span class="testi-info">Plano Pro · 3 meses</span>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">Nunca tive um protocolo tão adaptado à minha rotina. Treino 50 min e os resultados superaram o que eu fazia em 2h antes.</div>
+      <div class="testi-author">
+        <span class="testi-name">Diego L.</span>
+        <span class="testi-info">Plano Elite · CEO</span>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">O portal é incrível — ver minha evolução em tempo real me motiva a não falhar. É como ter um personal 24h.</div>
+      <div class="testi-author">
+        <span class="testi-name">Diogo V.</span>
+        <span class="testi-info">Plano Pro · Recomposição</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq reveal" id="faq">
+  <div class="section-eyebrow">Dúvidas</div>
+  <h2 class="manifesto-title">Perguntas frequentes.</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-q-text">Preciso ir a uma academia específica?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a"><p class="faq-a-text">Não. O protocolo é adaptado para o ambiente que você tem disponível — academia, home gym ou qualquer estrutura. Informamos isso na avaliação inicial.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-q-text">Em quanto tempo recebo meu protocolo?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a"><p class="faq-a-text">Em até 72 horas após a avaliação inicial completa. O protocolo fica disponível direto no portal do aluno com toda a interface interativa.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-q-text">O plano alimentar é detalhado com quantidades?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a"><p class="faq-a-text">No plano Pro e Elite sim — com macros calculados para seu peso, composição e objetivo. No básico a estrutura é qualitativa e ajustável.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-q-text">Posso cancelar a qualquer momento?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a"><p class="faq-a-text">Sim. Não há fidelidade mínima. O cancelamento é feito via portal com 5 dias de antecedência do próximo ciclo de cobrança.</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span class="faq-q-text">E se eu tiver lesão ou limitação física?</span>
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-a"><p class="faq-a-text">É exatamente para isso que o protocolo é individual. Informamos na avaliação e o treino é desenvolvido respeitando suas limitações — sem risco, com resultado.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section reveal">
+  <div class="cta-glow"></div>
+  <div class="cta-label">Próximo passo</div>
+  <h2 class="cta-title">Pronto para<br>começar?</h2>
+  <p class="cta-sub">Entre em contato agora e receba sua avaliação inicial. O protocolo mais preciso que você já teve está a uma mensagem de distância.</p>
+  <a href="https://instagram.com/dyna.performance" target="_blank" class="cta-wpp">
+    <span class="wpp-icon">📲</span>
+    Seguir no Instagram
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">DYNA</div>
+  <ul class="footer-links">
+    <li><a href="https://instagram.com/dyna.performance" target="_blank">Instagram</a></li>
+    <li><a href="#manifesto">Método</a></li>
+    <li><a href="#plans">Planos</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <span class="footer-copy">© 2025 DYNA · Todos os direitos reservados</span>
+</footer>
+
+<script>
+// Cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  setTimeout(() => {
+    ring.style.left = e.clientX + 'px';
+    ring.style.top = e.clientY + 'px';
+  }, 60);
+});
+
+// Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// Reveal on scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// FAQ
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>
